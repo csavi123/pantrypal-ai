@@ -9,7 +9,7 @@ import { ErrorBanner } from "@/components/ErrorBanner";
 type Search = { mode?: "login" | "signup" };
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): Search => ({ mode: s.mode === "signup" ? "signup" : "login" }),
+  validateSearch: (s: Record<string, unknown>): Search => ({ mode: s["mode"] === "signup" ? "signup" : "login" }),
   head: () => ({
     meta: [
       { title: "Log in or sign up — PantryPal AI" },
@@ -38,8 +38,8 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const fe: Record<string, string> = {};
-    if (!/^\S+@\S+\.\S+$/.test(email)) fe.email = "Enter a valid email address.";
-    if (password.length < 6) fe.password = "Password must be at least 6 characters.";
+    if (!/^\S+@\S+\.\S+$/.test(email)) fe["email"] = "Enter a valid email address.";
+    if (password.length < 6) fe["password"] = "Password must be at least 6 characters.";
     setFieldErrors(fe);
     setError(null);
     setInfo(null);
@@ -78,13 +78,13 @@ function AuthPage() {
           )}
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!fieldErrors.email} />
-            {fieldErrors.email && <p className="text-xs text-destructive">{fieldErrors.email}</p>}
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!fieldErrors["email"]} />
+            {fieldErrors["email"] && <p className="text-xs text-destructive">{fieldErrors["email"]}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!fieldErrors.password} />
-            {fieldErrors.password && <p className="text-xs text-destructive">{fieldErrors.password}</p>}
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} aria-invalid={!!fieldErrors["password"]} />
+            {fieldErrors["password"] && <p className="text-xs text-destructive">{fieldErrors["password"]}</p>}
           </div>
           <Button type="submit" className="w-full rounded-full" disabled={busy}>
             {busy ? "Please wait…" : isSignup ? "Sign up" : "Log in"}

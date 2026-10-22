@@ -68,12 +68,12 @@ function Kitchen() {
   async function generate() {
     const e: Record<string, string> = {};
     const filled = rows.filter((r) => r.name.trim());
-    if (!filled.length) e.ingredients = "Add at least one ingredient.";
+    if (!filled.length) e["ingredients"] = "Add at least one ingredient.";
     for (const r of filled) {
       if (r.quantity.trim() && !(Number(r.quantity) > 0)) e[`q${r.key}`] = "Use a positive number.";
     }
     const pErr = validateProtein(prefs.protein_goal_g);
-    if (pErr) e.protein = pErr;
+    if (pErr) e["protein"] = pErr;
     setErrors(e);
     setBanner(null);
     if (Object.keys(e).length) return;
@@ -154,7 +154,7 @@ function Kitchen() {
               </div>
             ))}
           </div>
-          {errors.ingredients && <p className="mt-2 text-xs text-destructive">{errors.ingredients}</p>}
+          {errors["ingredients"] && <p className="mt-2 text-xs text-destructive">{errors["ingredients"]}</p>}
           <Button variant="outline" size="sm" className="mt-4" onClick={() => setRows((r) => [...r, newRow()])}>
             <Plus className="mr-1 h-4 w-4" /> Add row
           </Button>
@@ -162,7 +162,7 @@ function Kitchen() {
 
         <section className="rounded-2xl bg-card p-6 shadow-soft">
           <h2 className="mb-4 text-2xl font-semibold">Preferences</h2>
-          <PreferenceFields value={prefs} onChange={setPrefs} proteinError={errors.protein} />
+          <PreferenceFields value={prefs} onChange={setPrefs} proteinError={errors["protein"]} />
         </section>
       </div>
 

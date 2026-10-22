@@ -47,8 +47,8 @@ function PreferencesPage() {
   async function save() {
     const e: Record<string, string> = {};
     const p = validateProtein(prefs.protein_goal_g);
-    if (p) e.protein = p;
-    if (name.length > 60) e.name = "Keep your name under 60 characters.";
+    if (p) e["protein"] = p;
+    if (name.length > 60) e["name"] = "Keep your name under 60 characters.";
     setErrors(e);
     setErr(null);
     if (Object.keys(e).length) return;
@@ -77,10 +77,10 @@ function PreferencesPage() {
       <div className="mt-8 space-y-6 rounded-2xl bg-card p-6 shadow-soft">
         <div className="max-w-sm space-y-1.5">
           <Label htmlFor="dn">Display name</Label>
-          <Input id="dn" value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!!errors.name} />
-          {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+          <Input id="dn" value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!!errors["name"]} />
+          {errors["name"] && <p className="text-xs text-destructive">{errors["name"]}</p>}
         </div>
-        <PreferenceFields value={prefs} onChange={setPrefs} proteinError={errors.protein} />
+        <PreferenceFields value={prefs} onChange={setPrefs} proteinError={errors["protein"]} />
         {err && <ErrorBanner message={err} />}
         <Button onClick={save} disabled={saving} className="rounded-full">{saving ? "Saving…" : "Save preferences"}</Button>
       </div>

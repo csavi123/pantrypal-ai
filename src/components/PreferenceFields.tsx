@@ -17,7 +17,7 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-export function PreferenceFields({ value, onChange, proteinError }: { value: Prefs; onChange: (p: Prefs) => void; proteinError?: string }) {
+export function PreferenceFields({ value, onChange, proteinError }: { value: Prefs; onChange: (p: Prefs) => void; proteinError?: string | undefined }) {
   return (
     <div className="space-y-6">
       <div>

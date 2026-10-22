@@ -4,12 +4,12 @@ import { Clock } from "lucide-react";
 import { recipesByIdsQuery } from "@/lib/queries";
 import type { Nutrition } from "@/lib/pantry";
 
-type Search = { ids?: string; message?: string };
+type Search = { ids?: string | undefined; message?: string | undefined };
 
 export const Route = createFileRoute("/_authenticated/results")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    ids: typeof s.ids === "string" ? s.ids : undefined,
-    message: typeof s.message === "string" ? s.message : undefined,
+    ids: typeof s["ids"] === "string" ? s["ids"] : undefined,
+    message: typeof s["message"] === "string" ? s["message"] : undefined,
   }),
   head: () => ({
     meta: [
