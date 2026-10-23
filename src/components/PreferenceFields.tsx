@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 
 export type Prefs = { max_cook_time_minutes: number; cuisine: string; dietary_restrictions: string[]; protein_goal_g: string };
 
-function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+export function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"

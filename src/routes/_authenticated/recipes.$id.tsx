@@ -49,6 +49,10 @@ function RecipeDetail() {
   const steps = (r.steps as unknown as string[]) ?? [];
   const subs = (r.substitutions as unknown as GeneratedRecipe["substitutions"]) ?? [];
   const n = r.nutrition as unknown as Nutrition | null;
+  const hasNutrition = n?.calories_kcal != null && n?.protein_g != null;
+  // Staples come flagged per ingredient; recipes saved before that carry a "(basic staple)" suffix instead.
+  const missingList = Array.isArray(r.missing_ingredients) ? (r.missing_ingredients as string[]) : [];
+  const staples = new Set(missingList.filter((m) => m.endsWith(" (basic staple)")).map((m) => m.slice(0, -" (basic staple)".length)));
 
   async function save() {
     if (!rating) return;
@@ -78,7 +82,15 @@ function RecipeDetail() {
           {ingredients.map((i, idx) => (
             <li key={idx} className="flex items-center justify-between gap-3 py-2.5">
               <span>{[i.quantity, i.unit].filter((x) => x != null && x !== "").join(" ")} {i.name}</span>
-              {i.in_pantry ? <Badge className="bg-success text-success-foreground hover:bg-success">In your pantry</Badge> : <Badge variant="outline" className="border-primary text-primary">Missing</Badge>}
+              {i.in_pantry && i.pantry_shortfall ? (
+                <Badge variant="outline" className="border-primary text-primary">Need more ({i.pantry_shortfall})</Badge>
+              ) : i.in_pantry ? (
+                <Badge className="bg-success text-success-foreground hover:bg-success">In your pantry</Badge>
+              ) : i.is_staple || staples.has(i.name) ? (
+                <Badge variant="secondary">Basic staple</Badge>
+              ) : (
+                <Badge variant="outline" className="border-primary text-primary">Missing</Badge>
+              )}
             </li>
           ))}
         </ul>
@@ -107,16 +119,17 @@ function RecipeDetail() {
 
       {n && (
         <section className="mt-6 rounded-2xl bg-card p-6 shadow-soft">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold">Nutrition</h2>
-            <Badge variant="secondary">Estimated</Badge>
-          </div>
-          <div className="mt-4 flex gap-8">
-            <div><p className="font-serif text-3xl font-semibold">{n.calories_kcal ?? "–"}</p><p className="text-sm text-muted-foreground">kcal per serving</p></div>
-            <div><p className="font-serif text-3xl font-semibold">{n.protein_g ?? "–"} g</p><p className="text-sm text-muted-foreground">protein per serving</p></div>
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">Source: {n.source}</p>
+          <h2 className="text-2xl font-semibold">Nutrition</h2>
+          {hasNutrition ? (
+            <p className="mt-3">
+              <span className="font-semibold">≈ {n.calories_kcal} kcal · ≈ {n.protein_g} g protein</span> per serving{" "}
+              <span className="text-sm text-muted-foreground">(estimate, {n.source})</span>
+            </p>
+          ) : (
+            <p className="mt-3 font-semibold">Nutrition unavailable</p>
+          )}
           {n.unavailable_items?.length > 0 && <p className="mt-1 text-xs text-muted-foreground">No data for: {n.unavailable_items.join(", ")}</p>}
+          {n.protein_note && <p className="mt-3 text-sm text-primary">{n.protein_note}</p>}
         </section>
       )}
 
