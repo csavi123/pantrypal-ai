@@ -12,14 +12,16 @@ Healthy, protein-rich recipes from what's already in your kitchen. Enter your in
 - **Recipe checks in code**: every AI recipe is verified before it is shown:
   - dietary restrictions (ingredients, substitutions and steps);
   - cook time within your limit;
-  - complete structure.
+  - complete structure;
+  - with **Only use my ingredients** on (the default), no required ingredient beyond your list and basic staples.
   
   Recipes that fail are sent back for replacements, at most 2 retries.
 - **Honest pantry badges**:
   - **In your pantry**: only ingredients you entered;
   - **Need more (have 2)**: when a recipe uses more than you have;
-  - **Basic staple**: salt, pepper, oil and water;
-  - **Missing**: everything else.
+  - **Basic staple**: salt, pepper, oil, butter, garlic and water;
+  - **Optional**: extras the recipe works without;
+  - **Missing**: everything else (only possible with "Only use my ingredients" off).
 - **Nutrition**: calories and protein per serving from USDA FoodData Central, always labeled as an estimate. Ingredients without reference data are listed rather than guessed.
 - **Feedback loop**: rate recipes helpful or not helpful (with an optional reason). Your recent feedback shapes future suggestions.
 - **Daily limit**: 5 generations per user per day (configurable). Retries never count extra.
@@ -132,7 +134,8 @@ In Supabase → Authentication → URL Configuration, set the **Site URL** to yo
     "cuisine": "Any",
     "dietary_restrictions": ["vegetarian"],
     "protein_goal_g": 30,
-    "recipe_count": 2
+    "recipe_count": 2,
+    "pantry_only": true
   }
 }
 ```

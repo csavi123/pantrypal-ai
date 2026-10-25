@@ -15,7 +15,7 @@ Web app that suggests up to 3 healthy, protein-rich recipes from the user's pant
 
 ## Hard product rules
 - Never suggest a recipe that violates the user's dietary restrictions.
-- Never claim an ingredient is in the pantry unless the user entered it. Anything else is listed as missing.
+- Never claim an ingredient is in the pantry unless the user entered it. Anything else is labeled as a basic staple, optional, or missing.
 - Nutrition is always labeled as an estimate. If reference data is unavailable for an ingredient, say so; never invent numbers.
 - Recipe generation retries at most 2 times (3 attempts total), then returns a clear message explaining which requirement could not be met.
 - Never present the app as medical or dietetic advice.

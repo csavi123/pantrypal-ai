@@ -88,6 +88,8 @@ function RecipeDetail() {
                 <Badge className="bg-success text-success-foreground hover:bg-success">In your pantry</Badge>
               ) : i.is_staple || staples.has(i.name) ? (
                 <Badge variant="secondary">Basic staple</Badge>
+              ) : i.optional ? (
+                <Badge variant="outline">Optional</Badge>
               ) : (
                 <Badge variant="outline" className="border-primary text-primary">Missing</Badge>
               )}

@@ -42,6 +42,7 @@ type Preferences = {
   dietary_restrictions: string[];
   protein_goal_g: number | null;
   recipe_count: number;
+  pantry_only: boolean;
 };
 
 function json(status: number, body: unknown) {
@@ -155,6 +156,12 @@ function validate(body: unknown): Validated {
     fields["preferences.recipe_count"] = `Number of recipes must be between 1 and ${MAX_RECIPES}.`;
   }
 
+  // Optional; defaults to using only the user's ingredients.
+  const pantryOnly = p["pantry_only"] ?? true;
+  if (typeof pantryOnly !== "boolean") {
+    fields["preferences.pantry_only"] = "Only use my ingredients must be true or false.";
+  }
+
   if (Object.keys(fields).length) {
     return {
       ok: false,
@@ -171,6 +178,7 @@ function validate(body: unknown): Validated {
       dietary_restrictions: diets as string[],
       protein_goal_g: (protein as number | null | undefined) ?? null,
       recipe_count: recipeCount as number,
+      pantry_only: pantryOnly as boolean,
     },
   };
 }
@@ -193,6 +201,7 @@ async function generate(
     maxMinutes: input.maxMinutes,
     diets: input.diets,
     cuisine: input.cuisine,
+    pantryOnly: input.pantryOnly,
   };
   const messages: ChatMessage[] = [{ role: "user", content: initialPrompt(input) }];
   const accepted: Recipe[] = [];
@@ -410,6 +419,7 @@ Deno.serve(async (req) => {
       proteinGoal,
       feedback,
       count: v.preferences.recipe_count,
+      pantryOnly: v.preferences.pantry_only,
     },
     userId,
   );
@@ -431,11 +441,16 @@ Deno.serve(async (req) => {
 
   // 5. Nutrition from USDA. Never fails the request; missing data is reported per recipe.
   // Pantry items used beyond the amount the user entered are flagged "need more".
-  const recipes = await addNutrition(
-    markShortages(result.recipes, v.ingredients),
-    Deno.env.get("USDA_API_KEY")?.trim(),
-    proteinGoal,
-    userId,
+  // Recipes that need nothing beyond the pantry and staples come first (stable sort).
+  const recipes = (
+    await addNutrition(
+      markShortages(result.recipes, v.ingredients),
+      Deno.env.get("USDA_API_KEY")?.trim(),
+      proteinGoal,
+      userId,
+    )
+  ).sort(
+    (a, b) => Number(a.missing_ingredients.length > 0) - Number(b.missing_ingredients.length > 0),
   );
 
   const n = recipes.length;

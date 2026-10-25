@@ -5,7 +5,7 @@ export const CUISINES = ["Any", "Indian", "Italian", "Mexican", "Mediterranean",
 export const DIETS = ["vegetarian", "vegan", "gluten-free", "dairy-free", "nut-free", "egg-free", "halal"] as const;
 export const QUICK_ADD = ["Eggs", "Chicken breast", "Rice", "Onion", "Garlic", "Tomato", "Spinach", "Greek yogurt", "Lentils", "Tofu", "Paneer", "Chickpeas"];
 
-export type Ingredient = { name: string; quantity: number | null; unit: string | null; in_pantry: boolean; pantry_shortfall?: string | null; is_staple?: boolean };
+export type Ingredient = { name: string; quantity: number | null; unit: string | null; in_pantry: boolean; pantry_shortfall?: string | null; is_staple?: boolean; optional?: boolean };
 export type Nutrition = {
   calories_kcal: number | null;
   protein_g: number | null;

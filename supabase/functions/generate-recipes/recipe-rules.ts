@@ -3,11 +3,13 @@
 
 export type Ingredient = { name: string; quantity: number | null; unit: string | null };
 // pantry_shortfall: set when the recipe needs more than the user entered, e.g. "have 2".
-// is_staple: salt, pepper, oil or water the user didn't enter. Neither "in pantry" nor "missing".
+// is_staple: a basic staple (salt, oil, butter, garlic...) the user didn't enter.
+// optional: an extra the recipe works without. Neither staples nor optional items are "missing".
 export type RecipeIngredient = Ingredient & {
   in_pantry: boolean;
   pantry_shortfall: string | null;
   is_staple: boolean;
+  optional: boolean;
 };
 export type Nutrition = {
   calories_kcal: number | null;
@@ -30,7 +32,7 @@ export type Recipe = {
 };
 
 // Codes are safe to log; details go back to the model and into user-facing messages.
-export type FailureCode = "DIET" | "TOO_LONG" | "STRUCTURE" | "PARSE" | "AI_ERROR";
+export type FailureCode = "DIET" | "TOO_LONG" | "EXTRAS" | "STRUCTURE" | "PARSE" | "AI_ERROR";
 export type Failure = { code: FailureCode; detail: string; diet?: string };
 
 const MAX_RECIPE_INGREDIENTS = 25;
@@ -40,6 +42,8 @@ export type CheckContext = {
   maxMinutes: number;
   diets: string[];
   cuisine: string;
+  /** Only the user's ingredients, staples and optional extras are allowed. */
+  pantryOnly: boolean;
 };
 
 // ---------- text normalization ----------
@@ -163,8 +167,21 @@ const STAPLES = new Set(
     "sunflower oil",
     "neutral oil",
     "water",
+    "butter",
+    "ghee",
+    "garlic",
+    "garlic clove",
+    "cooking spray",
   ].map(pantryKey),
 );
+
+/** "butter or olive oil" -> ["butter", "olive oil"], as pantry keys. */
+function alternatives(name: string): string[] {
+  return name
+    .split(/\s+or\s+|\//i)
+    .map(pantryKey)
+    .filter(Boolean);
+}
 
 // ---------- dietary rules ----------
 
@@ -466,8 +483,8 @@ export function checkRecipe(raw: unknown, ctx: CheckContext): CheckResult {
     .map((i) => {
       const name = str(i["name"]);
       const q = i["quantity"];
-      const key = pantryKey(name);
-      const inPantry = key !== "" && userKeys.has(key);
+      const alts = alternatives(name);
+      const inPantry = alts.some((k) => userKeys.has(k));
       return {
         name,
         quantity: typeof q === "number" && Number.isFinite(q) && q >= 0 ? q : null,
@@ -475,7 +492,8 @@ export function checkRecipe(raw: unknown, ctx: CheckContext): CheckResult {
         // Recomputed: only what the user entered counts as in the pantry.
         in_pantry: inPantry,
         pantry_shortfall: null,
-        is_staple: !inPantry && STAPLES.has(key),
+        is_staple: !inPantry && alts.length > 0 && alts.some((k) => STAPLES.has(k)),
+        optional: !inPantry && (i["optional"] === true || /\boptional\b/i.test(name)),
       };
     })
     .filter((i) => i.name);
@@ -520,10 +538,18 @@ export function checkRecipe(raw: unknown, ctx: CheckContext): CheckResult {
       failures.push({ code: "DIET", diet, detail: `is not ${diet} (contains ${hits.join(", ")})` });
   }
 
-  if (failures.length) return { ok: false, title: label, failures };
+  // Basic staples are assumed on hand and optional extras can be skipped, so neither is missing.
+  const missing = ingredients
+    .filter((i) => !i.in_pantry && !i.is_staple && !i.optional)
+    .map((i) => i.name);
+  if (ctx.pantryOnly && missing.length) {
+    failures.push({
+      code: "EXTRAS",
+      detail: `needs ingredients the user doesn't have (${missing.join(", ")}); use only their ingredients and basic staples, or mark extras optional`,
+    });
+  }
 
-  // Basic staples are assumed on hand, so they are not listed as missing.
-  const missing = ingredients.filter((i) => !i.in_pantry && !i.is_staple).map((i) => i.name);
+  if (failures.length) return { ok: false, title: label, failures };
 
   return {
     ok: true,
@@ -553,6 +579,10 @@ export function checkRecipe(raw: unknown, ctx: CheckContext): CheckResult {
 export function noRecipeMessage(failures: Failure[], maxMinutes: number): string {
   const diets = [...new Set(failures.filter((f) => f.code === "DIET").map((f) => f.diet!))];
   const tooLong = failures.some((f) => f.code === "TOO_LONG");
+  const extras = failures.some((f) => f.code === "EXTRAS");
+  if (extras && !diets.length && !tooLong) {
+    return 'Couldn\'t make a complete recipe using only your ingredients. Try adding more ingredients or turning off "Only use my ingredients".';
+  }
   if (!diets.length && !tooLong) {
     return "The recipe service didn't return a complete recipe after 3 tries. Please try again.";
   }

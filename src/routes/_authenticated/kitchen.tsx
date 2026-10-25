@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { Pill, PreferenceFields, validateProtein, type Prefs } from "@/components/PreferenceFields";
 import {
@@ -60,6 +61,16 @@ function validate(rows: Row[], prefs: Prefs) {
   return { errors, filled };
 }
 
+// Remembered per browser; the profile table has no column for it.
+const PANTRY_ONLY_KEY = "pantrypal.pantryOnly";
+function readPantryOnly() {
+  try {
+    return localStorage.getItem(PANTRY_ONLY_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
 function Kitchen() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -70,11 +81,23 @@ function Kitchen() {
   const [prefilled, setPrefilled] = useState(false);
   const [count, setCount] = useState<number>(3);
   const [saveDefaults, setSaveDefaults] = useState(false);
+  const [pantryOnly, setPantryOnly] = useState(true);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [banner, setBanner] = useState<Banner | null>(null);
   const [loading, setLoading] = useState(false);
   const [left, setLeft] = useState<number | null>(null);
   const [limit, setLimit] = useState(DAILY_LIMIT);
+
+  useEffect(() => setPantryOnly(readPantryOnly()), []);
+
+  function changePantryOnly(v: boolean) {
+    setPantryOnly(v);
+    try {
+      localStorage.setItem(PANTRY_ONLY_KEY, String(v));
+    } catch {
+      // Storage unavailable (private mode); the choice still applies to this visit.
+    }
+  }
 
   useEffect(() => {
     if (profile && !prefilled) {
@@ -140,6 +163,7 @@ function Kitchen() {
       dietary_restrictions: prefs.dietary_restrictions,
       protein_goal_g: protein,
       recipe_count: count,
+      pantry_only: pantryOnly,
     };
 
     setLoading(true);
@@ -209,7 +233,11 @@ function Kitchen() {
         case "NO_VALID_RECIPE":
           return setBanner({
             message: e.message,
-            details: ["Tip: more ingredients, a longer cooking time or fewer restrictions give the recipe service more to work with."],
+            details: [
+              pantryOnly
+                ? "Tip: more ingredients, a longer cooking time, fewer restrictions or turning off \"Only use my ingredients\" give the recipe service more to work with."
+                : "Tip: more ingredients, a longer cooking time or fewer restrictions give the recipe service more to work with.",
+            ],
           });
         case "AI_UNAVAILABLE":
           return setBanner({ message: e.message || GENERIC_ERROR });
@@ -254,6 +282,17 @@ function Kitchen() {
           <Button variant="outline" size="sm" className="mt-4" onClick={() => edit((r) => [...r, newRow()])}>
             <Plus className="mr-1 h-4 w-4" /> Add row
           </Button>
+          <div className="mt-6 flex items-start gap-3 border-t border-border pt-5">
+            <Switch id="pantry-only" checked={pantryOnly} onCheckedChange={changePantryOnly} />
+            <div>
+              <Label htmlFor="pantry-only">Only use my ingredients</Label>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {pantryOnly
+                  ? "Recipes use just what you listed, plus basics like salt, oil, butter and garlic. Extras are marked optional."
+                  : "Recipes may call for a few ingredients you don't have; they're marked Missing."}
+              </p>
+            </div>
+          </div>
         </section>
 
         <section className="rounded-2xl bg-card p-6 shadow-soft">
