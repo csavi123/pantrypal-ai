@@ -13,6 +13,7 @@ import { addNutrition } from "./nutrition.ts";
 import { markShortages } from "./pantry-amounts.ts";
 import {
   checkRecipe,
+  isStaple,
   noRecipeMessage,
   type Failure,
   type Ingredient,
@@ -169,9 +170,22 @@ function validate(body: unknown): Validated {
     };
   }
 
+  // Kitchen basics and spices are always available, so only main ingredients count.
+  const mainIngredients = ingredients.filter((i) => !isStaple(i.name));
+  if (!mainIngredients.length) {
+    return {
+      ok: false,
+      response: fail(
+        400,
+        "NO_INGREDIENTS",
+        "Add at least one main ingredient. Kitchen basics and spices are already assumed.",
+      ),
+    };
+  }
+
   return {
     ok: true,
-    ingredients,
+    ingredients: mainIngredients,
     preferences: {
       max_cook_time_minutes: time as number,
       cuisine: cuisine as string,

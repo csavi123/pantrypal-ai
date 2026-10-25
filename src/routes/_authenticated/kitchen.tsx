@@ -14,6 +14,7 @@ import { ErrorBanner } from "@/components/ErrorBanner";
 import { Pill, PreferenceFields, validateProtein, type Prefs } from "@/components/PreferenceFields";
 import {
   DAILY_LIMIT,
+  isAssumedIngredient,
   MAX_INGREDIENTS,
   MAX_NAME_LENGTH,
   QUICK_ADD,
@@ -47,7 +48,8 @@ const GENERIC_ERROR = "Something went wrong. Please try again.";
 /** Same limits the edge function enforces, checked as the user types. Keys: n<row>, q<row>, ingredients, protein. */
 function validate(rows: Row[], prefs: Prefs) {
   const errors: Record<string, string> = {};
-  const filled = rows.filter((r) => r.name.trim());
+  // Only main ingredients count; basics and spices are always assumed.
+  const filled = rows.filter((r) => r.name.trim() && !isAssumedIngredient(r.name));
   if (!filled.length) errors["ingredients"] = "Add at least one ingredient.";
   else if (filled.length > MAX_INGREDIENTS) errors["ingredients"] = `Use at most ${MAX_INGREDIENTS} ingredients.`;
   for (const r of rows) {
@@ -83,6 +85,8 @@ function Kitchen() {
   const [saveDefaults, setSaveDefaults] = useState(false);
   const [pantryOnly, setPantryOnly] = useState(true);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
+  // Per row: "Onion is already assumed…", shown after a basic or spice is cleared from the field.
+  const [assumedHints, setAssumedHints] = useState<Record<number, string>>({});
   const [banner, setBanner] = useState<Banner | null>(null);
   const [loading, setLoading] = useState(false);
   const [left, setLeft] = useState<number | null>(null);
@@ -122,7 +126,19 @@ function Kitchen() {
     setServerErrors({});
     setRows(fn);
   };
-  const update = (key: number, patch: Partial<Row>) => edit((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  const update = (key: number, patch: Partial<Row>) => {
+    if (patch.name !== undefined) setAssumedHints(({ [key]: _, ...rest }) => rest);
+    edit((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  };
+
+  // Runs when the user leaves a name field: basics and spices are cleared with a hint, not added.
+  function clearIfAssumed(row: Row) {
+    const name = row.name.trim();
+    if (!name || !isAssumedIngredient(name)) return;
+    const label = name.charAt(0).toUpperCase() + name.slice(1);
+    update(row.key, { name: "", quantity: "", unit: "" });
+    setAssumedHints((h) => ({ ...h, [row.key]: `${label} is already assumed, no need to add it.` }));
+  }
 
   function quickAdd(name: string) {
     edit((r) => {
@@ -264,18 +280,31 @@ function Kitchen() {
             {rows.map((r) => (
               <div key={r.key}>
                 <div className="flex gap-2">
-                  <Input placeholder="Ingredient" value={r.name} onChange={(e) => update(r.key, { name: e.target.value })} className="flex-1" aria-label="Ingredient name" aria-invalid={!!errors[`n${r.key}`]} />
-                  <Input placeholder="Qty" value={r.quantity} inputMode="decimal" onChange={(e) => update(r.key, { quantity: e.target.value })} className="w-20" aria-label="Quantity" aria-invalid={!!errors[`q${r.key}`]} />
-                  <Input placeholder="Unit" value={r.unit} onChange={(e) => update(r.key, { unit: e.target.value })} className="w-24" aria-label="Unit" />
+                  <Input
+                    placeholder="Ingredient"
+                    value={r.name}
+                    onChange={(e) => update(r.key, { name: e.target.value })}
+                    onBlur={() => clearIfAssumed(r)}
+                    onKeyDown={(e) => e.key === "Enter" && clearIfAssumed(r)}
+                    className="flex-1"
+                    aria-label="Ingredient name"
+                    aria-invalid={!!errors[`n${r.key}`]}
+                  />
+                  <Input placeholder="Qty" value={r.quantity} inputMode="decimal" onChange={(e) => update(r.key, { quantity: e.target.value })} className="w-20" aria-label="Quantity (optional)" aria-invalid={!!errors[`q${r.key}`]} />
+                  <Input placeholder="Unit" value={r.unit} onChange={(e) => update(r.key, { unit: e.target.value })} className="w-24" aria-label="Unit (optional)" />
                   <Button variant="ghost" size="icon" aria-label="Remove ingredient" onClick={() => edit((x) => (x.length > 1 ? x.filter((y) => y.key !== r.key) : [newRow()]))}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
                 {errors[`n${r.key}`] && <p className="mt-1 text-xs text-destructive">{errors[`n${r.key}`]}</p>}
                 {errors[`q${r.key}`] && <p className="mt-1 text-xs text-destructive">{errors[`q${r.key}`]}</p>}
+                {assumedHints[r.key] && <p className="mt-1 text-xs text-muted-foreground" role="status">{assumedHints[r.key]}</p>}
               </div>
             ))}
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Kitchen basics (onion, garlic, tomato, oil, salt) and common spices are assumed. Just add your main ingredients.
+          </p>
           {errors["ingredients"] && (
             <p className={`mt-2 text-xs ${filled.length ? "text-destructive" : "text-muted-foreground"}`}>{errors["ingredients"]}</p>
           )}
@@ -288,7 +317,7 @@ function Kitchen() {
               <Label htmlFor="pantry-only">Only use my ingredients</Label>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {pantryOnly
-                  ? "Recipes use just what you listed, plus basics like salt, oil, butter and garlic. Extras are marked optional."
+                  ? "Recipes use just what you listed, plus kitchen basics and spices. Extras are marked optional."
                   : "Recipes may call for a few ingredients you don't have; they're marked Missing."}
               </p>
             </div>

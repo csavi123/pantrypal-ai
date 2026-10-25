@@ -1,9 +1,13 @@
+// Basics, spices and the main-ingredient chips live in one file shared with the edge function.
+import { isAssumedIngredient, MAIN_INGREDIENTS } from "../../supabase/functions/_shared/kitchen-basics.ts";
+
 export const DAILY_LIMIT = 5;
 export const COOK_TIMES = [15, 30, 45, 60] as const;
 export const RECIPE_COUNTS = [1, 2, 3] as const;
 export const CUISINES = ["Any", "Indian", "Italian", "Mexican", "Mediterranean", "Asian", "American"] as const;
 export const DIETS = ["vegetarian", "vegan", "gluten-free", "dairy-free", "nut-free", "egg-free", "halal"] as const;
-export const QUICK_ADD = ["Eggs", "Chicken breast", "Rice", "Onion", "Garlic", "Tomato", "Spinach", "Greek yogurt", "Lentils", "Tofu", "Paneer", "Chickpeas"];
+export { isAssumedIngredient };
+export const QUICK_ADD = MAIN_INGREDIENTS.filter((n) => !isAssumedIngredient(n));
 
 export type Ingredient = { name: string; quantity: number | null; unit: string | null; in_pantry: boolean; pantry_shortfall?: string | null; is_staple?: boolean; optional?: boolean };
 export type Nutrition = {

@@ -8,18 +8,18 @@ Healthy, protein-rich recipes from what's already in your kitchen. Enter your in
 
 ## Features
 
-- **Kitchen**: add ingredients (quantity and unit optional), pick cook time, cuisine, diets, protein target and how many recipes (1–3). Inputs are validated as you type, and you can save your choices as defaults.
+- **Kitchen**: add your main ingredients (quantity and unit optional); kitchen basics (onion, garlic, tomato, oil, salt…) and common spices are always assumed, pick cook time, cuisine, diets, protein target and how many recipes (1–3). Inputs are validated as you type, and you can save your choices as defaults.
 - **Recipe checks in code**: every AI recipe is verified before it is shown:
   - dietary restrictions (ingredients, substitutions and steps);
   - cook time within your limit;
   - complete structure;
-  - with **Only use my ingredients** on (the default), no required ingredient beyond your list and basic staples.
+  - with **Only use my ingredients** on (the default), no required ingredient beyond your list, kitchen basics and spices.
   
   Recipes that fail are sent back for replacements, at most 2 retries.
 - **Honest pantry badges**:
   - **In your pantry**: only ingredients you entered;
   - **Need more (have 2)**: when a recipe uses more than you have;
-  - **Basic staple**: salt, pepper, oil, butter, garlic and water;
+  - **Basic staple**: kitchen basics and common spices, listed in `supabase/functions/_shared/kitchen-basics.ts`;
   - **Optional**: extras the recipe works without;
   - **Missing**: everything else (only possible with "Only use my ingredients" off).
 - **Nutrition**: calories and protein per serving from USDA FoodData Central, always labeled as an estimate. Ingredients without reference data are listed rather than guessed.
@@ -72,6 +72,8 @@ supabase/
     recipe-rules.ts              pantry matching, diet keyword rules, recipe checks
     nutrition.ts                 USDA lookup (5 s timeout), unit conversion, per-serving totals
     pantry-amounts.ts            "need more" check against entered quantities
+  functions/_shared/
+    kitchen-basics.ts            basics, spices and quick-add chips (shared with the app)
   migrations/                    database schema, RLS, consume_generation(), hardening
 ```
 

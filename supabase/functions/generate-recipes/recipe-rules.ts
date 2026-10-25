@@ -1,9 +1,11 @@
 // Code-side checks for model output. Nothing the model says about pantry status,
 // diets or timing is trusted; everything is recomputed here.
 
+import { COMMON_SPICES, isAssumedIngredient, KITCHEN_BASICS } from "../_shared/kitchen-basics.ts";
+
 export type Ingredient = { name: string; quantity: number | null; unit: string | null };
 // pantry_shortfall: set when the recipe needs more than the user entered, e.g. "have 2".
-// is_staple: a basic staple (salt, oil, butter, garlic...) the user didn't enter.
+// is_staple: a kitchen basic or common spice (see _shared/kitchen-basics.ts).
 // optional: an extra the recipe works without. Neither staples nor optional items are "missing".
 export type RecipeIngredient = Ingredient & {
   in_pantry: boolean;
@@ -150,37 +152,22 @@ export function pantryKey(name: string): string {
     .join(" ");
 }
 
-const STAPLES = new Set(
-  [
-    "salt",
-    "sea salt",
-    "kosher salt",
-    "table salt",
-    "pepper",
-    "black pepper",
-    "salt and pepper",
-    "oil",
-    "olive oil",
-    "vegetable oil",
-    "canola oil",
-    "cooking oil",
-    "sunflower oil",
-    "neutral oil",
-    "water",
-    "butter",
-    "ghee",
-    "garlic",
-    "garlic clove",
-    "cooking spray",
-  ].map(pantryKey),
-);
+// Kitchen basics and common spices (shared with the app) count as available whatever
+// the user entered. Matched two ways: the shared loose key, and pantryKey, which also
+// strips prep words ("garlic clove, thinly sliced").
+const STAPLE_KEYS = new Set([...KITCHEN_BASICS, ...COMMON_SPICES].map(pantryKey).filter(Boolean));
 
-/** "butter or olive oil" -> ["butter", "olive oil"], as pantry keys. */
+/** "butter or olive oil" -> ["butter", "olive oil"]. */
 function alternatives(name: string): string[] {
   return name
     .split(/\s+or\s+|\//i)
-    .map(pantryKey)
+    .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** True when the ingredient (or any "X or Y" alternative) is a kitchen basic or spice. */
+export function isStaple(name: string): boolean {
+  return alternatives(name).some((a) => isAssumedIngredient(a) || STAPLE_KEYS.has(pantryKey(a)));
 }
 
 // ---------- dietary rules ----------
@@ -483,8 +470,7 @@ export function checkRecipe(raw: unknown, ctx: CheckContext): CheckResult {
     .map((i) => {
       const name = str(i["name"]);
       const q = i["quantity"];
-      const alts = alternatives(name);
-      const inPantry = alts.some((k) => userKeys.has(k));
+      const inPantry = alternatives(name).some((a) => userKeys.has(pantryKey(a)));
       return {
         name,
         quantity: typeof q === "number" && Number.isFinite(q) && q >= 0 ? q : null,
@@ -492,7 +478,7 @@ export function checkRecipe(raw: unknown, ctx: CheckContext): CheckResult {
         // Recomputed: only what the user entered counts as in the pantry.
         in_pantry: inPantry,
         pantry_shortfall: null,
-        is_staple: !inPantry && alts.length > 0 && alts.some((k) => STAPLES.has(k)),
+        is_staple: !inPantry && isStaple(name),
         optional: !inPantry && (i["optional"] === true || /\boptional\b/i.test(name)),
       };
     })
@@ -545,7 +531,7 @@ export function checkRecipe(raw: unknown, ctx: CheckContext): CheckResult {
   if (ctx.pantryOnly && missing.length) {
     failures.push({
       code: "EXTRAS",
-      detail: `needs ingredients the user doesn't have (${missing.join(", ")}); use only their ingredients and basic staples, or mark extras optional`,
+      detail: `needs ingredients the user doesn't have (${missing.join(", ")}); use only their ingredients, kitchen basics and spices, or mark extras optional`,
     });
   }
 
