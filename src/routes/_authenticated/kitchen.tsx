@@ -11,14 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ErrorBanner } from "@/components/ErrorBanner";
-import { Pill, PreferenceFields, validateProtein, type Prefs } from "@/components/PreferenceFields";
+import { PreferenceFields, validateProtein, type Prefs } from "@/components/PreferenceFields";
 import {
   DAILY_LIMIT,
   isAssumedIngredient,
   MAX_INGREDIENTS,
   MAX_NAME_LENGTH,
   QUICK_ADD,
-  RECIPE_COUNTS,
+  RECIPES_PER_GENERATION,
   readFunctionError,
   type GenerateResponse,
 } from "@/lib/pantry";
@@ -81,7 +81,6 @@ function Kitchen() {
   const [rows, setRows] = useState<Row[]>([newRow()]);
   const [prefs, setPrefs] = useState<Prefs>({ max_cook_time_minutes: 30, cuisine: "Any", dietary_restrictions: [], protein_goal_g: "" });
   const [prefilled, setPrefilled] = useState(false);
-  const [count, setCount] = useState<number>(3);
   const [saveDefaults, setSaveDefaults] = useState(false);
   const [pantryOnly, setPantryOnly] = useState(true);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
@@ -178,7 +177,7 @@ function Kitchen() {
       cuisine: prefs.cuisine,
       dietary_restrictions: prefs.dietary_restrictions,
       protein_goal_g: protein,
-      recipe_count: count,
+      recipe_count: RECIPES_PER_GENERATION,
       pantry_only: pantryOnly,
     };
 
@@ -200,7 +199,7 @@ function Kitchen() {
       const { data: saved, error: saveErr } = await supabase
         .from("recipes")
         .insert(
-          data.recipes.slice(0, count).map((r) => ({
+          data.recipes.slice(0, RECIPES_PER_GENERATION).map((r) => ({
             user_id: u.user!.id,
             title: r.title,
             cuisine: r.cuisine,
@@ -266,7 +265,7 @@ function Kitchen() {
   return (
     <div>
       <h1 className="text-4xl font-semibold">What's in your kitchen?</h1>
-      <p className="mt-2 text-muted-foreground">Add what you have, set your preferences, and we'll suggest up to three recipes.</p>
+      <p className="mt-2 text-muted-foreground">Add what you have, set your preferences, and we'll suggest a recipe.</p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl bg-card p-6 shadow-soft">
@@ -327,14 +326,6 @@ function Kitchen() {
         <section className="rounded-2xl bg-card p-6 shadow-soft">
           <h2 className="mb-4 text-2xl font-semibold">Preferences</h2>
           <PreferenceFields value={prefs} onChange={(p) => { setServerErrors({}); setPrefs(p); }} proteinError={errors["protein"]} />
-          <div className="mt-6">
-            <p className="mb-2 text-sm font-medium">How many recipes?</p>
-            <div className="flex flex-wrap gap-2">
-              {RECIPE_COUNTS.map((n) => (
-                <Pill key={n} active={count === n} onClick={() => setCount(n)}>{n}</Pill>
-              ))}
-            </div>
-          </div>
           <div className="mt-6 flex items-start gap-2">
             <Checkbox id="save-defaults" checked={saveDefaults} onCheckedChange={(v) => setSaveDefaults(v === true)} />
             <div>
@@ -352,7 +343,7 @@ function Kitchen() {
           </div>
         )}
         <Button size="lg" className="rounded-full px-10" onClick={generate} disabled={invalid || loading || outOfGenerations}>
-          {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cooking up ideas…</>) : `Generate ${count === 1 ? "1 recipe" : `${count} recipes`}`}
+          {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cooking up ideas…</>) : "Generate recipe"}
         </Button>
         {loading ? (
           <p className="text-center text-sm text-muted-foreground">

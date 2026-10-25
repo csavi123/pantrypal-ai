@@ -2,13 +2,13 @@
 
 PantryPal AI helps busy people prepare healthy, protein-rich meals using the ingredients they have, the time they can spare, and the foods they actually enjoy.
 
-Healthy, protein-rich recipes from what's already in your kitchen. Enter your ingredients, cooking time, cuisine and dietary restrictions, and PantryPal suggests 1 to 3 recipes with steps, substitutions, pantry status and estimated nutrition.
+Healthy, protein-rich recipes from what's already in your kitchen. Enter your ingredients, cooking time, cuisine and dietary restrictions, and PantryPal suggests a recipe with steps, substitutions, pantry status and estimated nutrition.
 
 > PantryPal offers cooking ideas, not medical or dietary advice. Nutrition values are estimates.
 
 ## Features
 
-- **Kitchen**: add your main ingredients (quantity and unit optional); kitchen basics (onion, garlic, tomato, oil, salt…) and common spices are always assumed, pick cook time, cuisine, diets, protein target and how many recipes (1–3). Inputs are validated as you type, and you can save your choices as defaults.
+- **Kitchen**: add your main ingredients (quantity and unit optional); kitchen basics (onion, garlic, tomato, oil, salt…) and common spices are always assumed, and pick cook time, cuisine, diets and protein target. Each generation returns one recipe. Inputs are validated as you type, and you can save your choices as defaults.
 - **Recipe checks in code**: every AI recipe is verified before it is shown:
   - dietary restrictions (ingredients, substitutions and steps);
   - cook time within your limit;
@@ -136,7 +136,6 @@ In Supabase → Authentication → URL Configuration, set the **Site URL** to yo
     "cuisine": "Any",
     "dietary_restrictions": ["vegetarian"],
     "protein_goal_g": 30,
-    "recipe_count": 2,
     "pantry_only": true
   }
 }

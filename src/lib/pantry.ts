@@ -3,7 +3,7 @@ import { isAssumedIngredient, MAIN_INGREDIENTS } from "../../supabase/functions/
 
 export const DAILY_LIMIT = 5;
 export const COOK_TIMES = [15, 30, 45, 60] as const;
-export const RECIPE_COUNTS = [1, 2, 3] as const;
+export const RECIPES_PER_GENERATION = 1;
 export const CUISINES = ["Any", "Indian", "Italian", "Mexican", "Mediterranean", "Asian", "American"] as const;
 export const DIETS = ["vegetarian", "vegan", "gluten-free", "dairy-free", "nut-free", "egg-free", "halal"] as const;
 export { isAssumedIngredient };

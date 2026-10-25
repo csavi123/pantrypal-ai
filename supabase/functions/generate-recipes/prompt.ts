@@ -19,7 +19,8 @@ export type PromptInput = {
   pantryOnly: boolean;
 };
 
-export const MAX_RECIPES = 3;
+// One recipe per generation; the request may omit recipe_count or send 1.
+export const MAX_RECIPES = 1;
 
 const SHAPE = `{"recipes":[{"title":string,"cuisine":string,"cook_time_minutes":integer,"servings":integer,"ingredients":[{"name":string,"quantity":number|null,"unit":string|null,"in_pantry":boolean,"optional":boolean}],"missing_ingredients":[string],"steps":[string],"substitutions":[{"ingredient":string,"substitute":string}]}]}`;
 

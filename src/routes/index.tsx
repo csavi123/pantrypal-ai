@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
 const STEPS = [
   { n: "01", title: "Add ingredients", body: "List what's in your fridge and pantry. Quantities are optional.", block: "bg-block-sage" },
   { n: "02", title: "Set preferences", body: "Pick your time budget, favourite cuisine, diet and protein target.", block: "bg-block-butter" },
-  { n: "03", title: "Get recipes", body: "Receive up to three recipes with steps, swaps and estimated nutrition.", block: "bg-block-clay" },
+  { n: "03", title: "Get recipes", body: "Receive a recipe with steps, swaps and estimated nutrition.", block: "bg-block-clay" },
 ];
 
 // Hero illustration: a board of raw ingredients and the phone showing what they became.
