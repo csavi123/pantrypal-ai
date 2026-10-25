@@ -53,6 +53,11 @@ function RecipeDetail() {
   // Staples come flagged per ingredient; recipes saved before that carry a "(basic staple)" suffix instead.
   const missingList = Array.isArray(r.missing_ingredients) ? (r.missing_ingredients as string[]) : [];
   const staples = new Set(missingList.filter((m) => m.endsWith(" (basic staple)")).map((m) => m.slice(0, -" (basic staple)".length)));
+  // Kitchen basics and spices are listed separately, without badges; they're always assumed.
+  const isBasic = (i: GeneratedRecipe["ingredients"][number]) => !i.in_pantry && (i.is_staple || staples.has(i.name));
+  const amount = (i: GeneratedRecipe["ingredients"][number]) => [i.quantity, i.unit].filter((x) => x != null && x !== "").join(" ");
+  const mainIngredients = ingredients.filter((i) => !isBasic(i));
+  const basics = ingredients.filter(isBasic);
 
   async function save() {
     if (!rating) return;
@@ -79,15 +84,13 @@ function RecipeDetail() {
       <section className="mt-8 rounded-2xl bg-card p-6 shadow-soft">
         <h2 className="text-2xl font-semibold">Ingredients</h2>
         <ul className="mt-4 divide-y divide-border">
-          {ingredients.map((i, idx) => (
+          {mainIngredients.map((i, idx) => (
             <li key={idx} className="flex items-center justify-between gap-3 py-2.5">
-              <span>{[i.quantity, i.unit].filter((x) => x != null && x !== "").join(" ")} {i.name}</span>
+              <span>{amount(i)} {i.name}</span>
               {i.in_pantry && i.pantry_shortfall ? (
                 <Badge variant="outline" className="border-primary text-primary">Need more ({i.pantry_shortfall})</Badge>
               ) : i.in_pantry ? (
                 <Badge className="bg-success text-success-foreground hover:bg-success">In your pantry</Badge>
-              ) : i.is_staple || staples.has(i.name) ? (
-                <Badge variant="secondary">Basic staple</Badge>
               ) : i.optional ? (
                 <Badge variant="outline">Optional</Badge>
               ) : (
@@ -96,6 +99,12 @@ function RecipeDetail() {
             </li>
           ))}
         </ul>
+        {basics.length > 0 && (
+          <div className="mt-5 border-t border-border pt-4">
+            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Kitchen basics &amp; spices</p>
+            <p className="mt-2">{basics.map((i) => `${amount(i)} ${i.name}`.trim()).join(" · ")}</p>
+          </div>
+        )}
       </section>
 
       <section className="mt-6">

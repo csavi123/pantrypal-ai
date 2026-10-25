@@ -19,7 +19,7 @@ Healthy, protein-rich recipes from what's already in your kitchen. Enter your in
 - **Honest pantry badges**:
   - **In your pantry**: only ingredients you entered;
   - **Need more (have 2)**: when a recipe uses more than you have;
-  - **Basic staple**: kitchen basics and common spices, listed in `supabase/functions/_shared/kitchen-basics.ts`;
+  - kitchen basics and common spices (listed in `supabase/functions/_shared/kitchen-basics.ts`) are shown in their own **Kitchen basics & spices** group, with no badge;
   - **Optional**: extras the recipe works without;
   - **Missing**: everything else (only possible with "Only use my ingredients" off).
 - **Nutrition**: calories and protein per serving from USDA FoodData Central, always labeled as an estimate. Ingredients without reference data are listed rather than guessed.
